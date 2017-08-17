@@ -1,0 +1,89 @@
+#-------------------------------------------#
+# 基本设置
+
+name: I'm Winnie
+mail: lwdggm@gmail.com
+description: Winnie
+author: chuwajiang
+github: https://github.com/chuwajiang
+mail: 
+logo: https://avatars2.githubusercontent.com/u/31090464?v=4&u=e499a1e916f75e5119cdfcea2d775e379aace07c&s=400
+#-------------------------------------------#
+
+#-------------------------------------------#
+#数据源设置（用于实现数据源与框架分离）
+dataSource: blog
+#-------------------------------------------#
+
+# Build settings
+
+markdown_ext: mdxxx # 防止md文件被编译
+
+paginate:     20   # 每页显示20条
+paginate_path: /page/:num/
+permalink:     ./post/:categories/:year-:month-:day-:title:output_ext
+
+rss_path : ./feed.xml
+
+source:  .
+include: ["_kiss"]
+exclude: ["node_modules", "scripts"]
+
+destination:      ./.site
+layouts_dir:      ./_layouts
+
+excerpt_separator: <!--more-->  # you can specify your own separator, of course.
+      
+collections:
+  articles:
+    output: true
+    title: Articles
+  essays:
+    output: true
+    title: Academic Essays
+  slides:
+    output: true
+    title: Slides
+  projects:
+    output: true
+    title: Projects
+
+defaults:
+  - scope:
+      path: "_posts" # an empty string here means all files in the project
+      type: "posts" # previously `post` in Jekyll 2.2.
+    values:
+      layout: "posts"
+      comments: false
+      category: "未归类"
+
+  - scope:
+      path: "_articles" # an empty string here means all files in the project
+      type: "articles" # previously `post` in Jekyll 2.2.
+    values:
+      layout: "articles"
+      comments: false
+      category: "未归类"
+
+  - scope:
+      path: "_projects" # an empty string here means all files in the project
+      type: "projects" # previously `post` in Jekyll 2.2.
+    values:
+      layout: "projects"
+      comments: false
+      category: "未归类"
+
+  - scope:
+      path: "_essays" # an empty string here means all files in the project
+      type: "essays" # previously `post` in Jekyll 2.2.
+    values:
+      layout: "essays"
+      category: "未归类"
+
+  - scope:
+      path: "_slides" # an empty string here means all files in the project
+      type: "slides" # previously `post` in Jekyll 2.2.
+    values:
+      layout: "slides"
+      category: "未归类"
+  
