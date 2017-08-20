@@ -1,29 +1,26 @@
 #-------------------------------------------#
 # 基本设置
 
-title: 极简博客系统
+name: 楚娃酱
 mail: lwdggm@gmail.com
-description: 极简博客系统
-author: lwdgit
-github: https://github.com/lwdgit
-mail: lwdggm@gmail.com
-logo: https://avatars2.githubusercontent.com/u/5530205?v=3
-
+description: Winnie
+author: chuwajiang
+github: https://github.com/chuwajiang
+mail:
+logo: https://avatars2.githubusercontent.com/u/31090464?v=4
 #-------------------------------------------#
 
 #-------------------------------------------#
 #数据源设置（用于实现数据源与框架分离）
-dataSource: . 
+dataSource: blog
 #-------------------------------------------#
-
-
 
 # Build settings
 
 markdown_ext: mdxxx # 防止md文件被编译
 
 paginate:     20   # 每页显示20条
-paginate_path: ./page/:num/
+paginate_path: /page/:num/
 permalink:     ./post/:categories/:year-:month-:day-:title:output_ext
 
 rss_path : ./feed.xml
@@ -36,7 +33,7 @@ destination:      ./.site
 layouts_dir:      ./_layouts
 
 excerpt_separator: <!--more-->  # you can specify your own separator, of course.
-      
+
 collections:
   articles:
     output: true
