@@ -2,17 +2,17 @@
   <article v-loading.full="loading">
     <el-form>
       <el-row :gutter="12">
-        <el-col :md="16">
+        <el-col :md="14">
           <el-input placeholder="请输入文章标题" v-model="title"></el-input>
         </el-col>
-        <el-col :md="4">
+        <el-col :xs="12" :sm="16" :md="4">
           <el-input placeholder="保存目录, 可以为空" v-model="path"></el-input>
         </el-col>
-        <el-col :md="4"><el-button type="primary" @click="save">保存</el-button><el-button @click="newPost">新建</el-button></el-col>
+        <el-col :xs="12" :sm="8" :md="6"><el-button type="primary" @click="save">保存</el-button><el-button @click="newPost">新建</el-button></el-col>
       </el-row>
     </el-form>
     <br />
-    <mavon-editor v-model="content" class="content" />
+    <mavon-editor v-model="content" class="content" :default_open="defaultOpen" />
   </article>
 </template>
 <script>
@@ -29,11 +29,17 @@ export default {
       path: '',
       sha: '',
       loading: false,
-      isEditing: false
+      isEditing: false,
+      defaultOpen: window.innerWidth > 1100 ? 'preview' : 'edit'
     };
   },
   created() {
     this.fetchFile();
+    window.onunload = window.onbeforeunload = () => {
+      try {
+        localStorage.setItem(this.sha, this.content);
+      } catch (e) {}
+    };
   },
   components: { mavonEditor },
   methods: {
@@ -48,7 +54,16 @@ export default {
         this.title = path.pop();
         this.path = path.join('/') || '';
         this.sha = sha;
-        this.content = Base64.decode(content);
+        if ((this.content = localStorage.getItem(this.sha))) {
+          try {
+            localStorage.removeItem(this.sha);
+          } catch (e) {}
+          this.$nextTick(() => {
+            document.querySelector('.admin-body').scrollLeft = 1000;
+          });
+        } else {
+          this.content = Base64.decode(content);
+        }
         this.loading = false;
       })
       .catch((err = {}) => {
@@ -121,9 +136,15 @@ export default {
 };
 </script>
 <style scoped>
+article {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 .content {
-  height: 80%;
-  height: -webkit-calc(100vh - 160px);
   z-index: 10;
+  flex: 1;
+  min-width: 100%;
+  max-width: 100%;
 }
 </style>

@@ -1,9 +1,9 @@
 <template>
-  <section class="db">
+  <section class="admin">
     <template v-if="!$route.meta.hidden">
       <!-- header start  -->
-      <header class="db-header">
-        <router-link class="logo" :to="{path: '/'}">Kiss博客管理系统</router-link>
+      <header class="admin-header">
+        <router-link class="logo" :to="{path: '/'}">极简博客管理系统</router-link>
         <div class="user-info" v-if="user.name">
           <el-dropdown trigger="click">
             <span class="el-dropdown-link">
@@ -18,11 +18,11 @@
       <!-- header end  -->
 
       <!-- body start  -->
-      <div class="db-body">
+      <div class="admin-body">
 
         <!-- menu start -->
-        <aside class="db-menu-wrapper">
-          <el-menu :default-active="activeMenu" class="db-menu-bar" router>
+        <aside class="admin-menu-wrapper" ref="aside">
+          <el-menu :default-active="activeMenu" class="admin-menu-bar" router>
             <template v-for="(route, index) in $router.options.routes[$router.options.routes.length - 2].children">
               <template v-if="route.children && route.name">
                 <el-submenu :index="route.name">
@@ -43,8 +43,8 @@
         <!-- menu end -->
 
         <!-- content start -->
-        <div class="db-content-wrapper">
-          <section class="db-content">
+        <div class="admin-content-wrapper">
+          <section class="admin-content">
             <router-view></router-view>
           </section>
         </div>
@@ -67,6 +67,7 @@ export default {
         name: '',
         avatar: ''
       },
+      openSideBar: true,
       activeMenu: ''
     };
   },
@@ -98,20 +99,20 @@ export default {
 
 <style lang="scss">
 @import './styles/_variables.scss';
-
-.db {
-  // header
-  .db-header {
+.el-message-box {
+  max-width: 100%;
+}
+.admin {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  .admin-header {
     width: 100%;
     height: 60px;
     background: #20A0FF;
     padding: 13px 20px;
     box-sizing: border-box;
     color: #ffffff;
-    z-index: 100;
-    position: fixed;
-    left: 0;
-    top: 0;
     display: flex;
     align-items: center;
 
@@ -122,51 +123,40 @@ export default {
     .el-dropdown-link {
       color: #fff;
     }
-
-    .user-info {
-      img {
-        width: 25px;
-        height: 25px;
-        vertical-align: -7px;
-        margin: 0 0 0 10px;
-        cursor: pointer;
-      }
-    }
   }
 
   // body
-  .db-body {
-
+  .admin-body {
     // menu
-    .db-menu-wrapper {
-      position: fixed;
-      left: 0;
-      padding-top: 60px;
-      height: 100%;
+    display: flex;
+    flex: 1;
+    width: 100%;
+    overflow-x: auto;
+    .admin-menu-wrapper {
       overflow: auto;
-      z-index: 98;
-      box-sizing: border-box;
-
-      .db-menu-bar {
+      min-width: 240px;
+      .admin-menu-bar {
+        width: 100%;
+        min-width: 240px;
         height: 100%;
-        flex-grow: 0;
-        width: 240px;
       }
     }
 
     // content
-    .db-content-wrapper {
-      width: 100%;
-      z-index: 97;
+    .admin-content-wrapper {
+      flex: 1;
+      max-width: 100%;
+      max-width: calc(100% - 24px);
+      min-width: 320px;
       box-sizing: border-box;
-      padding: 60px 0px 0px 240px;
 
-      .db-content {
-        padding: 25px;
-
-        .db-content-inner {
-          padding: 30px 0px;
-        }
+      .admin-content {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
       }
     }
   }

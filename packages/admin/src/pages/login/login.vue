@@ -78,7 +78,9 @@ export default {
         } else {
           this.$message.error('账号或密码有误！');
         }
-        this.isBtnLoading = false;
+        setTimeout(() => {
+          this.isBtnLoading = false;
+        }, 2000);
       });
     },
     saveCredient() {
