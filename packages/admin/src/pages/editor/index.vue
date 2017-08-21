@@ -12,7 +12,7 @@
       </el-row>
     </el-form>
     <br />
-    <mavon-editor v-model="content" class="content" :default_open="defaultOpen" />
+    <mavon-editor v-model="content" class="content" :default_open="defaultOpen" @save="save" />
   </article>
 </template>
 <script>
@@ -29,13 +29,12 @@ export default {
       path: '',
       sha: '',
       loading: false,
-      isEditing: false,
       defaultOpen: window.innerWidth > 1100 ? 'preview' : 'edit'
     };
   },
   created() {
     this.fetchFile();
-    window.onunload = window.onbeforeunload = () => {
+    window.onpagehide = window.onunload = window.onbeforeunload = () => {
       try {
         localStorage.setItem(this.sha, this.content);
       } catch (e) {}
@@ -45,7 +44,6 @@ export default {
   methods: {
     fetchFile() {
       if (!this.$route.query.path) return;
-      this.isEditing = false;
       this.loading = true;
       return repo.contents(this.$route.query.path)
       .fetch()
@@ -64,6 +62,7 @@ export default {
         } else {
           this.content = Base64.decode(content);
         }
+        this.originContent = this.content;
         this.loading = false;
       })
       .catch((err = {}) => {
@@ -103,7 +102,7 @@ export default {
           type: 'success',
           message: '保存成功'
         });
-        this.isEditing = false;
+        this.originContent = this.content;
       })
       .catch((err = {}) => {
         this.loading = false;
@@ -117,15 +116,19 @@ export default {
       const now = new Date();
       return `${now.getFullYear()}-${this.pad(now.getMonth() + 1)}-${this.pad(now.getDate())}-我是标题`;
     },
-    newPost() {
-      if (this.isEditing) {
-        return this.$message.error('请先保存你正在编辑的文章');
-      }
-      this.isEditing = true;
+    reset() {
       this.title = this.initTitle();
       this.content = '';
+      this.originContent = '';
       this.path = '';
       this.sha = null;
+    },
+    newPost() {
+      if (this.originContent !== this.content) {
+        return this.$confirm('是否放弃原有文章？').then(this.reset);
+      } else {
+        this.reset();
+      }
     }
   },
   watch: {
@@ -146,5 +149,10 @@ article {
   flex: 1;
   min-width: 100%;
   max-width: 100%;
+}
+</style>
+<style>
+.mu-item-wrapper .mu-item {
+  min-height: auto;
 }
 </style>

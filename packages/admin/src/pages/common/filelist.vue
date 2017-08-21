@@ -3,7 +3,7 @@
     <el-table-column label="我的文件夹">
       <template scope="scope">
         <el-row type="flex" justify="space-between">
-          <div @click="editFile(scope.row)">{{ scope.row.path.split('/').slice(1).join('/') }}</div>
+          <div class="title" @click="editFile(scope.row)">{{ scope.row.path.split('/').slice(1).join('/') }}</div>
           <el-button size="small" icon="delete" type="text" @click="removeFile(scope.row)"></el-button>
         </el-row>
       </template>
@@ -26,6 +26,7 @@ export default {
   },
   methods: {
     fetchFiles() {
+      if (!octo) return;
       this.loading = true;
       octo.fromUrl(`https://api.github.com/repos/${user.name}/blog/git/trees/gh-pages?recursive=1`).fetch()
       .then((res) => {
@@ -69,7 +70,7 @@ export default {
   watch: {
     '$route.query'({ path, update }) {
       if (update) {
-        setTimeout(() => this.fetchFiles(), 800);
+        setTimeout(() => this.fetchFiles(), 1500);
         this.$router.replace({
           path: '/',
           query: {
@@ -83,6 +84,9 @@ export default {
 </script>
 <style>
 .el-table {
-  height: 100%;
+  height: auto;
+}
+.title {
+  flex: 1;
 }
 </style>
