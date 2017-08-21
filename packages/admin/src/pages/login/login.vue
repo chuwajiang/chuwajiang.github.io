@@ -41,7 +41,7 @@ export default {
     return {
       username: '',
       password: '',
-      rememberMe: true,
+      rememberMe: false,
       isBtnLoading: false
     };
   },
@@ -80,7 +80,7 @@ export default {
         }
         setTimeout(() => {
           this.isBtnLoading = false;
-        }, 2000);
+        }, 10000);
       });
     },
     saveCredient() {
