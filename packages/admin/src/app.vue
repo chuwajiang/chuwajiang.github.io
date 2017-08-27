@@ -10,7 +10,7 @@
               <span>{{ user.name }}</span><i class="el-icon-caret-bottom el-icon--right"></i>
             </span>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item><router-link class="logo" :to="{path: '../'}">返回首页</router-link></el-dropdown-item>
+              <el-dropdown-item @click.native="gotoHome">返回首页</el-dropdown-item>
               <el-dropdown-item @click.native="logout">注销</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
@@ -69,7 +69,7 @@ export default {
         avatar: ''
       },
       globalClass: '',
-      sideBarWidth: '20%',
+      sideBarWidth: '16%',
       openSideBar: true,
       activeMenu: ''
     };
@@ -120,6 +120,9 @@ export default {
         this.user = {};
       }
     },
+    gotoHome() {
+      location.href = '../';
+    },
     logout() {
       this.$confirm('确定要注销吗?', '提示', {
         confirmButtonText: '确定',
@@ -150,7 +153,7 @@ export default {
     width: 100%;
     height: 60px;
     background: #20A0FF;
-    padding: 13px 20px;
+    padding: 12px 20px;
     box-sizing: border-box;
     color: #ffffff;
     display: flex;
@@ -188,8 +191,7 @@ export default {
     }
 
     .admin-content-resizer {
-      cursor: pointer;
-      width: 6px;
+      min-width: 6px;
       cursor: col-resize;
     }
 
@@ -197,13 +199,12 @@ export default {
     .admin-content-wrapper {
       flex: 1;
       max-width: 100%;
-      max-width: calc(100% - 24px);
       min-width: 320px;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
       .admin-content {
-        padding: 20px;
+        padding: 16px;
         display: flex;
         flex-direction: column;
         max-width: 100%;

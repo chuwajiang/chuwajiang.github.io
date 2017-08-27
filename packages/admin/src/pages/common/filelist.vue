@@ -1,5 +1,6 @@
 <template>
   <el-tree
+    v-loading.body="loading"
     :data="fileTree"
     node-key="_path"
     @node-click="editFile"
@@ -9,7 +10,7 @@
 </template>
 
 <script>
-import { repo, octo, user, getUser } from '../../api';
+import { repo, octo, getUser } from '../../api';
 import EventBus from '../../event-bus';
 
 function setValue(path, val, obj) {
@@ -49,11 +50,13 @@ export default {
     return {
       filelist: [],
       loading: false,
-      fileTree: []
+      fileTree: [],
+      branches: ''
     };
   },
   mounted() {
     EventBus.$on('updateFiles', () => {
+      this.loading = true;
       setTimeout(() => {
         this.fetchFiles();
       }, 1000);
@@ -69,9 +72,23 @@ export default {
         return;
       };
       this.loading = true;
-      octo.fromUrl(`https://api.github.com/repos/${user.name}/blog/git/trees/gh-pages?recursive=1`).fetch()
+      return new Promise((resolve) => {
+        if (this.branches) {
+          resolve(this.branches);
+        } else {
+          // 获取默认branch
+          repo.fetch()
+          .then(({ defaultBranch }) => {
+            this.branches = defaultBranch;
+            resolve(this.branches);
+          });
+        }
+      })
+      .then((branches) => {
+        return repo.git.trees(`${branches}?recursive=1&rd=${Math.random()}`).fetch();
+      })
       .then(filelist => {
-        return filelist.tree.filter(item => item.path.indexOf('_posts') === 0 && !/(\/media|\/\.|\/_)/.test(item.path));
+        return filelist.tree.filter(item => item.path.indexOf('_posts') === 0 || item.path.indexOf('media') === 0 /* && !/(\/media|\/\.|\/_)/.test(item.path) */);
       })
       .then(tree => {
         this.loading = false;
@@ -81,9 +98,16 @@ export default {
         tree.forEach(function(item) {
           setValue(item.path, { _id: item.sha, _path: item.path, _type: item.type }, dataObj);
         });
-        this.fileTree = [];
-        objToMenu(dataObj, this.fileTree);
-        this.fileTree[0].label = '我的文件夹';
+        const fileTree = [];
+        objToMenu(dataObj, fileTree);
+        fileTree.forEach(item => {
+          if (item.label === '_posts') {
+            item.label = '我的文档';
+          } else {
+            item.label = '我的图片';
+          }
+        });
+        this.fileTree = fileTree;
       })
       .catch((err = {}) => {
         this.loading = false;
@@ -123,19 +147,6 @@ export default {
         h('span', { class: 'flex-1' }, node.label)
       ];
       return h('span', { class: 'flex flex-1' }, children);
-    }
-  },
-  watch: {
-    '$route.query'({ path, update }) {
-      if (update) {
-        setTimeout(() => this.fetchFiles(), 1500);
-        this.$router.replace({
-          path: '/',
-          query: {
-            path
-          }
-        });
-      }
     }
   }
 };
