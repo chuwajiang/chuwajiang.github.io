@@ -5,23 +5,25 @@
         <el-col :md="12">
           <el-input placeholder="请输入文章标题" v-model="title" :size="size"></el-input>
         </el-col>
-        <el-col :xs="24" :sm="14" :md="4">
-          <el-input placeholder="保存目录, 可以为空" v-model="path" :size="size"></el-input>
+        <el-col :xs="24" :sm="14" :md="6">
+          <el-input placeholder="存放文件夹, 可以为空" v-model="path" :size="size">
+             <template slot="prepend">{{ prefix }}</template>
+          </el-input>
         </el-col>
-        <el-col :xs="24" :sm="10" :md="8">
-          <el-button type="primary" @click="save" :size="size">保存</el-button>
-          <el-button @click="newPost" icon="plus" :size="size"></el-button>
+        <el-col :xs="24" :sm="10" :md="6">
+          <el-button v-if="isMarkdown()" type="primary" @click="save" :size="size">保存</el-button>
+          <el-button v-if="isMarkdown()" @click="newPost" icon="plus" :size="size"></el-button>
           <el-button type="danger" icon="delete" @click="removeFile" :size="size"></el-button>
         </el-col>
-        <el-col v-if="rawContent">
+        <el-col v-if="!isMarkdown()">
           <el-input readonly v-model="downloadUrl" ref="copyText" :size="size">
-            <template slot="append"><el-button @click="copy" :size="size">复制</el-button></template>
+            <template slot="append"><el-button @click="copy" :size="size">复制文件链接</el-button></template>
           </el-input>
         </el-col>
       </el-row>
     </el-form>
     <mavon-editor v-show="isMarkdown()" v-model="content" class="content" :default_open="defaultOpen" @save="save" @imgAdd="imgAdd" :toolbars="toolbars" ref="editor" />
-    <img v-show="!isMarkdown()" class="attachment" :src="rawContent" />
+    <img v-show="!isMarkdown()" class="attachment" :src="downloadUrl" />
   </article>
 </template>
 <script>
@@ -31,6 +33,7 @@ import 'mavon-editor/dist/css/index.css';
 import { repo } from '../../api';
 import EventBus from '../../event-bus';
 import ImageCompressor from 'image-compressor';
+const smallDevice = window.innerWidth > 1100;
 
 export default {
   data() {
@@ -38,13 +41,13 @@ export default {
       title: this.initTitle(),
       content: '',
       path: '',
-      rawContent: '',
-      sha: '',
+      prefix: '我的文档',
       downloadUrl: '',
+      sha: '',
       loading: false,
-      defaultOpen: window.innerWidth > 1100 ? 'preview' : 'edit',
-      size: window.innerWidth > 1100 ? 'large' : 'small',
-      toolbars: window.innerWidth > 1100 ? undefined : {
+      defaultOpen: smallDevice ? 'preview' : 'edit',
+      size: smallDevice ? 'large' : 'small',
+      toolbars: smallDevice ? undefined : {
         bold: true,
         italic: true,
         header: true,
@@ -65,7 +68,7 @@ export default {
     this.fetchFile();
     window.onpagehide = window.onunload = window.onbeforeunload = () => {
       try {
-        localStorage.setItem(this.sha, this.content);
+        localStorage.setItem(this.title, this.content);
       } catch (e) {}
     };
   },
@@ -79,53 +82,83 @@ export default {
       return /\.md$/.test(path) || path.trim() === '';
     },
     fetchFile() {
-      if (!this.$route.query.path) return;
+      if (!this.$route.query.path) {
+        this.initContent();
+        return;
+      };
       this.loading = true;
-      this.rawContent = '';
+      this.downloadUrl = '';
       repo.contents(this.$route.query.path + '?rd=' + Math.random())
       .fetch()
       .then(({ path, content, sha, name, downloadUrl }) => {
         path = path.split('/');
         this.title = path.pop();
+        this.prefix = path.shift() === 'media' ? '我的图片' : '我的文档';
         this.path = path.join('/') || '';
         this.sha = sha;
-        if (this.isMarkdown(name)) {
-          if ((this.content = localStorage.getItem(this.sha))) {
-            try {
-              localStorage.removeItem(this.sha);
-            } catch (e) {}
-            this.$nextTick(() => {
-              document.querySelector('.admin-body').scrollLeft = 1000;
-            });
-          } else {
-            this.content = Base64.decode(content);
-          }
-        } else {
-          this.rawContent = downloadUrl; // 'data:image/png;base64,' + content;
-          this.content = content;
-        }
         this.downloadUrl = downloadUrl;
-        this.originContent = this.content;
+        this.initContent(content);
         this.loading = false;
       })
       .catch((err = {}) => {
+        const message = /"message": "([^"]+)/m.test(err.message) && RegExp.$1 || err.toString();
         this.loading = false;
-        this.$message.error(/"message": "([^"]+)/m.test(err.message) && RegExp.$1 || err.toString());
+        if (~message.indexOf('not found')) {
+          this.content = '';
+          return;
+        }
+        this.$message.error(message.trim());
       });
+    },
+    initContent(content) {
+      if (!this.content) {
+        if (this.isMarkdown(this.title)) {
+          if (content) {
+            content = Base64.decode(content);
+          }
+          let draft = '';
+          if ((draft = localStorage.getItem(this.title))) {
+            if (!content || !draft) {
+              this.content = draft || content || '';
+            } else if (draft !== content) {
+              this.$confirm('检测到本地草稿与线上内容不一致，是否使用本地草稿？')
+              .then(() => {
+                this.content = draft;
+              })
+              .catch(() => {
+                this.content = content;
+              });
+            } else {
+              this.content = content;
+            }
+            this.$nextTick(() => {
+              document.querySelector('.admin-body').scrollLeft = 1000;
+            });
+          } else if (content) {
+            this.content = content;
+          }
+        } else {
+          this.content = content;
+        }
+      }
+      this.originContent = this.content;
     },
     save() {
       if (!this.title) {
         this.$message.error('请输入文件名');
         return;
       }
-      if (!/^(_posts|media)/.test(this.path)) {
-        this.path = ('_posts/' + this.path.replace(/(^\/)/, '')).replace(/(\/$)/g, '');
-      }
-      let path = this.path + '/' + this.title;
+      this.title = this.title.replace(/[\/\\]/g, '');
+      let path = [
+        '_post',
+        this.path.replace(/(^\/|\/$)/g, ''),
+        this.title
+      ].join('/').replace(/\/\/+/g, '/');
+
       const config = {
         path,
         message: 'update file: ' + path,
-        content: this.rawContent ? this.content : Base64.encode(this.content)
+        content: this.isMarkdown() ? Base64.encode(this.content) : this.content
       };
       if (this.sha) {
         config.sha = this.sha;
@@ -142,8 +175,13 @@ export default {
         this.originContent = this.content;
       })
       .catch((err = {}) => {
-        this.loading = false;
-        this.$message.error(/"message": "([^"]+)/m.test(err.message) && RegExp.$1 || err.toString());
+        const message = /"message": "([^"]+)/m.test(err.message) && RegExp.$1 || err.toString();
+        if (~message.indexOf('does not match')) {
+          this.fetchFile();
+        } else {
+          this.loading = false;
+          this.$message.error(message.trim());
+        }
       });
     },
     upload(config) {
@@ -164,7 +202,8 @@ export default {
     reset() {
       this.title = this.initTitle();
       this.content = '';
-      this.rawContent = '';
+      this.downloadUrl = '';
+      this.prefix = '我的文档';
       this.originContent = '';
       this.path = '';
       this.sha = null;
@@ -250,6 +289,7 @@ export default {
   },
   watch: {
     '$route.query'(val) {
+      this.reset();
       this.fetchFile();
     }
   }
