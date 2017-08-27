@@ -5,7 +5,7 @@
         <el-col :md="12">
           <el-input placeholder="请输入文章标题" v-model="title" :size="size"></el-input>
         </el-col>
-        <el-col :xs="24" :sm="14" :md="6">
+        <el-col v-if="isMarkdown()" :xs="24" :sm="14" :md="6">
           <el-input placeholder="存放文件夹, 可以为空" v-model="path" :size="size">
              <template slot="prepend">{{ prefix }}</template>
           </el-input>
