@@ -13,25 +13,16 @@
         <el-col :xs="24" :sm="10" :md="6">
           <el-button type="primary" @click="save" :size="size">保存</el-button>
           <el-button @click="newPost" icon="plus" :size="size"></el-button>
-<<<<<<< HEAD
           <el-button type="danger" icon="delete" @click="confirmRemove" :size="size"></el-button>
         </el-col>
       </el-row>
       <el-row :gutter="12" v-else>
         <el-col :span="20">
-=======
-          <el-button type="danger" icon="delete" @click="removeFile" :size="size"></el-button>
-        </el-col>
-      </el-row>
-      <el-row :gutter="12" v-else>
-        <el-col>
->>>>>>> 15e89b2ebfb0db2a75e0bdb2122a984ef29c3f04
           <el-input readonly v-model="downloadUrl" ref="copyText" :size="size">
             <template slot="append">
               <el-button @click="copy" :size="size">复制文件链接</el-button>
             </template>
           </el-input>
-          <el-button type="danger" icon="delete" @click="removeFile" :size="size"></el-button>
         </el-col>
         <el-col :span="4">
           <el-button type="danger" icon="delete" @click="confirmRemove" :size="size"></el-button>
