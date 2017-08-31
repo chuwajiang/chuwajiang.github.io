@@ -1,6 +1,4 @@
-#-------------------------------------------#
-# 基本设置
-
+#start
 title: Winnie
 mail: 15992657503@163.com
 description: Winnie
@@ -8,23 +6,16 @@ author: chuwajiang
 github: https://github.com/chuwajiang
 mail:
 logo: https://avatars2.githubusercontent.com/u/31090464?v=4
-#-------------------------------------------#
-
-#-------------------------------------------#
-#数据源设置（用于实现数据源与框架分离）
 dataSource: blog
-#-------------------------------------------#
+#end
 
-# Build settings
-
-markdown_ext: mdxxx # 防止md文件被编译
 
 paginate:     20   # 每页显示20条
-paginate_path: /page/:num/
+
+# Build settings
+markdown_ext: mdxxx # 防止md文件被编译
+paginate_path: ./page/:num/
 permalink:     ./post/:categories/:year-:month-:day-:title:output_ext
-
-rss_path : ./feed.xml
-
 source:  .
 include: ["admin"]
 exclude: ["node_modules", "scripts"]
@@ -33,7 +24,6 @@ destination:      ./.site
 layouts_dir:      ./_layouts
 
 excerpt_separator: <!--more-->  # you can specify your own separator, of course.
-
 
 defaults:
   - scope:

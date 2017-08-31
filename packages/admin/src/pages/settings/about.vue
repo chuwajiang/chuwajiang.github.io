@@ -1,36 +1,17 @@
 <template>
   <article v-loading.full="loading">
     <el-form label-width="50px">
-      <el-row :gutter="12" v-if="isMarkdown()">
-        <el-col :md="12">
-          <el-input placeholder="请输入文章标题" v-model="title" :size="size"></el-input>
-        </el-col>
-        <el-col :xs="24" :sm="14" :md="6">
-          <el-input placeholder="存放文件夹, 可以为空" v-model="path" :size="size">
-             <template slot="prepend">{{ prefix }}</template>
-          </el-input>
-        </el-col>
-        <el-col :xs="24" :sm="10" :md="6">
-          <el-button type="primary" @click="save" :size="size">保存</el-button>
-          <el-button @click="newPost" icon="plus" :size="size"></el-button>
-          <el-button type="danger" icon="delete" @click="confirmRemove" :size="size"></el-button>
-        </el-col>
-      </el-row>
-      <el-row :gutter="12" v-else>
-        <el-col :span="20">
-          <el-input readonly v-model="downloadUrl" ref="copyText" :size="size">
+      <el-row :gutter="12">
+        <el-col :md="24">
+          <el-input placeholder="请输入文章标题" value="关于我" :size="size" :readonly="true">
             <template slot="append">
-              <el-button @click="copy" :size="size">复制文件链接</el-button>
+              <el-button type="primary" @click="save" :size="size">保存</el-button>
             </template>
           </el-input>
         </el-col>
-        <el-col :span="4">
-          <el-button type="danger" icon="delete" @click="confirmRemove" :size="size"></el-button>
-        </el-col>
       </el-row>
     </el-form>
-    <mavon-editor v-show="isMarkdown()" v-model="content" class="content" :default_open="defaultOpen" @save="save" @imgAdd="imgAdd" :toolbars="toolbars" ref="editor" />
-    <img v-show="!isMarkdown()" class="attachment" :src="downloadUrl" />
+    <mavon-editor v-model="content" class="content" :default_open="defaultOpen" @save="save" @imgAdd="imgAdd" :toolbars="toolbars" ref="editor" />
   </article>
 </template>
 <script>
@@ -38,17 +19,16 @@ import { Base64 } from 'js-base64';
 import { mavonEditor } from 'mavon-editor';
 import 'mavon-editor/dist/css/index.css';
 import { repo } from '../../api';
-import EventBus from '../../event-bus';
 import ImageCompressor from 'image-compressor';
 const smallDevice = window.innerWidth > 1100;
 
 export default {
   data() {
     return {
-      title: this.initTitle(),
+      title: 'about.md',
       content: '',
       path: '',
-      prefix: '我的文档',
+      prefix: '',
       downloadUrl: '',
       sha: '',
       loading: false,
@@ -74,16 +54,13 @@ export default {
   created() {
     this.fetchFile();
     window.onpagehide = window.onunload = window.onbeforeunload = () => {
-      this.saveDraft();
+      try {
+        localStorage.setItem(this.title, this.content);
+      } catch (e) {}
     };
   },
   components: { mavonEditor },
   methods: {
-    saveDraft() {
-      try {
-        localStorage.setItem(this.title, this.content);
-      } catch (e) {}
-    },
     getTime(time) {
       const date = new Date(time);
       return `${date.getFullYear()}${this.pad(date.getMonth() + 1)}${this.pad(date.getDate())}${this.pad(date.getHours())}${this.pad(date.getMinutes())}${this.pad(date.getMilliseconds())}`;
@@ -92,18 +69,14 @@ export default {
       return /\.md$/.test(path) || path.trim() === '';
     },
     fetchFile() {
-      if (!this.$route.query.path) {
-        this.initContent();
-        return;
-      };
       this.loading = true;
       this.downloadUrl = '';
-      repo.contents(this.$route.query.path + '?rd=' + Math.random())
+      repo.contents('about.md?rd=' + Math.random())
       .fetch()
       .then(({ path, content, sha, name, downloadUrl }) => {
         path = path.split('/');
-        this.originTitle = this.title = path.pop();
-        this.prefix = path.shift() === 'media' ? '我的图片' : '我的文档';
+        this.title = path.pop();
+        this.prefix = '';
         this.path = path.join('/') || '';
         this.sha = sha;
         this.downloadUrl = downloadUrl;
@@ -160,7 +133,7 @@ export default {
       }
       this.title = this.title.replace(/[\/\\]/g, '');
       let path = [
-        '_posts',
+        './',
         this.path.replace(/(^\/|\/$)/g, ''),
         this.title
       ].join('/').replace(/\/\/+/g, '/');
@@ -182,10 +155,6 @@ export default {
           type: 'success',
           message: '保存成功'
         });
-        this.saveDraft();
-        if (this.originTitle && this.originTitle !== this.title) {
-          this.removeFile();
-        }
         this.originContent = this.content;
       })
       .catch((err = {}) => {
@@ -202,59 +171,20 @@ export default {
       return repo.contents(config.path).add(config)
       .then((response) => {
         this.loading = false;
-        EventBus.$emit('updateFiles');
         return response;
       });
     },
     pad(num) {
       return num > 9 ? num : '0' + num;
     },
-    initTitle() {
-      const now = new Date();
-      return `${now.getFullYear()}-${this.pad(now.getMonth() + 1)}-${this.pad(now.getDate())}-请修改标题.md`;
-    },
     reset() {
-      this.title = this.initTitle();
-      this.originTitle = '';
+      this.title = 'about.md';
       this.content = '';
       this.downloadUrl = '';
-      this.prefix = '我的文档';
+      this.prefix = '';
       this.originContent = '';
       this.path = '';
       this.sha = null;
-    },
-    confirmRemove() {
-      return this.$confirm('是否要删除此文件？')
-      .then(this.removeFile);
-    },
-    removeFile() {
-      this.loading = true;
-      return repo.contents(this.$route.query.path)
-      .remove({
-        message: 'remove file',
-        sha: this.sha
-      })
-      .then(() => {
-        this.loading = false;
-        this.$router.replace({
-          path: '/'
-        });
-        EventBus.$emit('updateFiles');
-      })
-      .catch((err = {}) => {
-        this.loading = false;
-        this.$message.error(/"message": "([^"]+)/m.test(err.message) && RegExp.$1 || err.toString());
-      });
-    },
-    newPost() {
-      if (this.originContent !== this.content) {
-        return this.$confirm('是否放弃原有文章？').then(this.reset);
-      } else {
-        this.$router.replace({
-          path: '/'
-        });
-        this.reset();
-      }
     },
     getBase64(file) {
       return new Promise((resolve, reject) => {
@@ -290,17 +220,6 @@ export default {
         this.loading = false;
         this.$message.error(/"message": "([^"]+)/m.test(err.message) && RegExp.$1 || err.toString());
       });
-    },
-    copy() {
-      var copyTextarea = this.$refs['copyText'].$refs['input'];
-      copyTextarea.select();
-      try {
-        var successful = document.execCommand('copy');
-        var msg = successful ? '成功' : '失败';
-        this.$message('复制' + msg);
-      } catch (err) {
-        this.$message.error('请手工复制链接');
-      }
     }
   },
   watch: {
